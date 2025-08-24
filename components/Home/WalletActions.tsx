@@ -202,7 +202,7 @@ async function payWithMonad() {
   if (isConnected) {
     return (
       <div className="space-y-4 border border-[#333] rounded-md p-4">
-        <div className="flex flex-row space-x-4 justify-start items-start">
+          <div className="flex flex-row space-x-4 justify-start items-start">
           <div className="flex flex-col space-y-4 justify-start">
             <p className="text-sm text-left">
               Connected to wallet:{' '}

@@ -1,294 +1,171 @@
-# Monad Farcaster MiniApp Template
+# PayLink — Monad Farcaster MiniApp
 
-The template demonstrates all Mini App capabilities and lets you easily modify it, so you can build Mini Apps.
+PayLink convierte cualquier cast de Farcaster en un checkout instantáneo con pagos nativos en Monad. Vende ebooks, entradas, NFTs, suscripciones y más, todo sin salir del feed.
 
-## Cloning the Template
+---
 
-You can the following command to clone the Mini App template to your local machine:
+## 🚀 ¿Qué es PayLink?
+
+PayLink permite a cualquier creador compartir un link en Farcaster y recibir pagos nativos en Monad. El usuario abre el link, paga en segundos y recibe acceso inmediato a su contenido digital.
+
+- **Checkout nativo en Farcaster Frames**
+- **Pagos ultrarrápidos en Monad (token nativo)**
+- **Entrega automática de links secretos o NFTs**
+- **UX sin fricción, sin salir de Farcaster**
+
+---
+
+## 🏗️ Estructura del Proyecto
 
 ```
-git clone https://github.com/monad-developers/monad-miniapp-template.git
+paylink/
+│── contracts/    # Smart contract PayLinkNative (Solidity)
+│── backend/      # API serverless para validar pagos y entregar contenido
+│── frontend/     # Next.js + Tailwind + Frame de pago
+│── assets/       # Logo, banners y arte
+│── pitch/        # Presentación y demo
 ```
 
-### Install the dependencies
+---
 
+## ⚡ Quickstart
+
+### 1. Clona el repo
+
+```bash
+git clone https://github.com/monad-developers/paylink.git
+cd paylink
 ```
+
+### 2. Instala dependencias
+
+```bash
 yarn
 ```
 
-### Copy `.env.example` over to `.env.local`
+### 3. Copia las variables de entorno
 
 ```bash
 cp .env.example .env.local
 ```
-
-### Run the template
-
-```bash
-yarn run dev
+Edita `.env.local` y pon la dirección del contrato PayLinkNative desplegado en Monad:
+```
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x1AF0019ED1655f47FAB07750AA26e7C18C81EE44
 ```
 
-### View the App in Warpcast Embed tool
-
-Warpcast has a neat [Embed tool](https://warpcast.com/~/developers/mini-apps/embed) that you can use to inspect the Mini App before you publish it.
-
-Unfortunately, the embed tool can only work with remote URL. Inputting a localhost URL does not work.
-
-As a workaround, you may make the local app accessible remotely using a tool like `cloudflared` or `ngrok`. In this guide we will use `cloudflared`.
-
-#### Install Cloudflared
+### 4. Levanta frontend y backend
 
 ```bash
-brew install cloudflared
+yarn dev
+# o en dos terminales:
+cd frontend && yarn dev
+cd backend && yarn dev
 ```
 
-For more installation options see the [official docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+### 5. Expon tu app para pruebas en Warpcast
 
-#### Expose localhost
-
-Run the following command in your terminal:
+Usa [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) o [ngrok](https://ngrok.com/) para exponer tu localhost:
 
 ```bash
 cloudflared tunnel --url http://localhost:3000
 ```
+Pon la URL generada en tu `.env.local` como `NEXT_PUBLIC_URL`.
 
-Be sure to specify the correct port for your local server.
+---
 
-#### Set `NEXT_PUBLIC_URL` environment variable in `.env.local` file
+## 🧩 ¿Cómo funciona?
 
-```bash
-NEXT_PUBLIC_URL=<url-from-cloudflared-or-ngrok>
-```
+1. **Creador** publica un cast con su PayLink (ej: `paylink.xyz/book123`).
+2. **Comprador** abre el cast → Frame muestra producto y botón “Pagar con Monad”.
+3. **Pago**: El usuario paga nativo (MON) al contrato PayLinkNative.
+4. **Confirmación**: El backend detecta el evento on-chain y desbloquea el recurso (link secreto, NFT, etc).
+5. **Todo sin salir de Farcaster**.
 
-#### Use the provided url
+---
 
-`cloudflared` will generate a random subdomain and print it in the terminal for you to use. Any traffic to this URL will get sent to your local server.
+## 📝 Smart Contract
 
-Enter the provided URL in the [Warpcast Embed tool](https://warpcast.com/~/developers/mini-apps/embed).
+- [`contracts/PayLinkNative.sol`](contracts/PayLinkNative.sol)
+- Recibe pagos nativos (MON), reenvía al vendedor y emite evento `PaymentReceived`.
+- Comisión opcional para plataforma.
+- Seguro y minimalista para hackathon.
 
-![embed-tool](https://docs.monad.xyz/img/guides/farcaster-miniapp/1.png)
+---
 
-Let's investigate the various components of the template.
+## 🖼️ Frontend
 
-## Customizing the Mini App Embed
+- [`frontend/`](frontend/)
+- Next.js + Tailwind + Frame para Farcaster.
+- Checkout con botón “Pagar con Monad”.
+- Muestra link secreto tras pago exitoso.
 
-Mini App Embed is how the Mini App shows up in the feed or in a chat conversation when the URL of the app is shared.
+---
 
-The Mini App Embed looks like this:
+## 🛠️ Backend
 
-![embed-preview](https://docs.monad.xyz/img/guides/farcaster-miniapp/2.png)
+- [`backend/`](backend/)
+- API serverless (Express/Supabase Functions).
+- Endpoints:
+  - `POST /create-link` — genera PayLink único.
+  - `POST /verify-payment` — valida pago on-chain.
+  - `GET /secret/:id` — entrega recurso desbloqueado.
 
-You can customize this by editing the file `app/page.tsx`:
+---
 
-```js
-...
+## 🎨 Branding
 
-const appUrl = env.NEXT_PUBLIC_URL;
+- Logo y banner en [`assets/`](assets/)
+- Colores: azul eléctrico, negro mate, blanco.
+- Slogan: **“Convierte cualquier cast en un checkout.”**
 
-const frame = {
-  version: "next",
-  imageUrl: `${appUrl}/images/feed.png`, // Embed image URL (3:2 image ratio)
-  button: {
-    title: "Template", // Text on the embed button
-    action: {
-      type: "launch_frame",
-      name: "Monad Farcaster MiniApp Template",
-      url: appUrl, // URL that is opened when the embed button is tapped or clicked.
-      splashImageUrl: `${appUrl}/images/splash.png`,
-      splashBackgroundColor: "#f7f7f7",
-    },
-  },
-};
+---
 
-...
-```
+## 🏁 Demo Rápida
 
-You can either edit the URLs for the images or replace the images in `public/images` folder in the template.
+1. Publica un cast con tu PayLink.
+2. Abre el frame, paga con Monad.
+3. Recibe acceso instantáneo al contenido.
 
-Once you are happy with the changes, click `Refetch` in the Embed tool to get the latest configuration.
+---
 
-> [!NOTE]
-> If you are developing locally, ensure that your Next.js app is running locally and the cloudflare tunnel is open. 
+## 📦 Archivos clave
 
+- `contracts/PayLinkNative.sol` — Smart contract de pagos nativos.
+- `frontend/components/PayFrame.tsx` — Frame de pago.
+- `backend/routes/payment.ts` — Validación y entrega de recursos.
+- `assets/logo.svg` y `assets/banner.svg` — Arte y branding.
+- `pitch/PayLink-pitch.pptx` — Presentación para jurado.
 
-## Customizing the Splash Screen
+---
 
-Upon opening the Mini App, the first thing the user will see is the Splash screen:
+## 📚 Documentación y recursos
 
-![splash-screen](https://docs.monad.xyz/img/guides/farcaster-miniapp/3.png)
+- [Docs Monad MiniApps](https://miniapps.farcaster.xyz/)
+- [Docs Monad](https://docs.monad.xyz/)
+- [Farcaster Frames](https://warpcast.notion.site/Frames-Developer-Docs-2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b)
+- [PayLink Pitch Deck](pitch/PayLink-pitch.pptx)
 
-You can edit the `app/page.tsx` file to customize the Splash screen.
+---
 
-```js
-...
+## 🛠️ Personaliza tu PayLink
 
-const appUrl = env.NEXT_PUBLIC_URL;
+- Cambia el arte en `/assets`
+- Edita los textos y precios en el backend
+- Agrega nuevos tipos de recursos (NFT, PDF, etc)
 
-const frame = {
-  version: "next",
-  imageUrl: `${appUrl}/images/feed.png`,
-  button: {
-    title: "Launch Template",
-    action: {
-      type: "launch_frame",
-      name: "Monad Farcaster MiniApp Template",
-      url: appUrl,
-      splashImageUrl: `${appUrl}/images/splash.png`, // App icon in the splash screen (200px * 200px)
-      splashBackgroundColor: "#f7f7f7", // Splash screen background color
-    },
-  },
-};
+---
 
-...
-```
+## 🏆 Pitch corto
 
-For `splashImageUrl`, you can either change the URL or replace the image in `public/images` folder in the template.
+> “PayLink convierte cualquier cast en un checkout. Recibe pagos instantáneos en Monad y entrega contenido digital sin salir de Farcaster. Así de simple.”
 
-## Modifying the Mini App
+---
 
-Upon opening the template Mini App, you should see a screen like this:
+## 📝 Licencia
 
-<img width="1512" alt="4" src="https://github.com/user-attachments/assets/259a3dd2-17ee-4afd-8942-ad83a92f6335" />
+MIT
 
+---
 
-The code for this screen is in the `components/pages/app.tsx` file:
-
-```tsx
-export default function Home() {
-  const { context } = useMiniAppContext();
-  return (
-    // SafeAreaContainer component makes sure that the app margins are rendered properly depending on which client is being used.
-    <SafeAreaContainer insets={context?.client.safeAreaInsets}>
-      {/* You replace the Demo component with your home component */}
-      <Demo />
-    </SafeAreaContainer>
-  )
-}
-```
-
-You can remove or edit the code in this file to build your Mini App.
-
-### Accessing User Context
-
-<img width="1130" alt="5" src="https://github.com/user-attachments/assets/4448c141-d159-4538-abda-a175d02330a7" />
-
-
-Your Mini App receives various information about the user, including `username`, `fid`, `displayName`, `pfpUrl` and other fields.
-
-The template provides a helpful hook `useMiniAppContext` that you can use to access these fields:
-
-```js
-export function User() {
-    const { context } = useMiniAppContext();
-    return <p>{context.user.username}</p>
-}
-```
-
-The template also provide an example of the same in `components/Home/User.tsx` file.
-
-You can learn more about Context [here](https://miniapps.farcaster.xyz/docs/sdk/context).
-
-### Performing App Actions
-
-![composeCast](https://docs.monad.xyz/img/guides/farcaster-miniapp/composeCast.gif)
-
-Mini Apps have the capability to perform native actions that enhance the user experience!
-
-Actions like:
-
-- `addFrame`: Allows the user to save (bookmark) the app in a dedicated section
-- `composeCast`: Allows the MiniApp to prompt the user to cast with prefilled text and media
-- `viewProfile`: Presents a profile of a Farcaster user in a client native UI
-
-Learn more about Mini App actions [here](https://miniapps.farcaster.xyz/docs/sdk/actions/add-frame)
-
-The template provides an easy way to access the actions via the `useMiniAppContext` hook!
-
-```js
-const { actions } = useMiniAppContext();
-```
-
-An example for the same can be found in `components/Home/FarcasterActions.tsx` file.
-
-### Prompting Wallet Actions
-
-<img width="1130" alt="6" src="https://github.com/user-attachments/assets/7dc46f05-bcbb-43b4-a0e6-4f421648dfc6" />
-
-Every user of Warpcast has a Warpcast wallet with Monad Testnet support.
-
-**Mini Apps can prompt the user to perform onchain actions**!
-
-The template provides an example for the same in `components/Home/WalletActions.tsx` file.
-
-```js
-export function WalletActions() {
-    ...
-
-    async function sendTransactionHandler() {
-        sendTransaction({
-            to: "0x7f748f154B6D180D35fA12460C7E4C631e28A9d7",
-            value: parseEther("1"),
-        });
-    }
-
-    ...
-}
-```
-
-> [!WARNING]
-> The Warpcast wallet supports multiple networks. It is recommended that you ensure that the right network is connected before prompting wallet actions.
-
-You can use viem's `switchChain` or equivalent to prompt a chain switch.
-
-```js
-// Switching to Monad Testnet
-switchChain({ chainId: 10143 });
-```
-
-The template has an example for the same in the `components/Home/WalletActions.tsx` file.
-:::
-
-## Modifying the `farcaster.json` file
-
-When publishing the Mini App you will need to have a `farcaster.json` file that follows the specification.
-
-You can edit the `app/.well-known/farcaster.json/route.ts` file with your app details before publishing the app!
-
-```ts
-...
-
-const appUrl = process.env.NEXT_PUBLIC_URL;
-const farcasterConfig = {
-    // accountAssociation details are required to associated the published app with it's author
-    accountAssociation: {
-        "header": "",
-        "payload": "",
-        "signature": ""
-    },
-    frame: {
-        version: "1",
-        name: "Monad Farcaster MiniApp Template",
-        iconUrl: `${appUrl}/images/icon.png`, // Icon of the app in the app store
-        homeUrl: `${appUrl}`, // Default launch URL
-        imageUrl: `${appUrl}/images/feed.png`, // Default image to show if shared in a feed.
-        screenshotUrls: [], // Visual previews of the app
-        tags: ["monad", "farcaster", "miniapp", "template"], // Descriptive tags for search
-        primaryCategory: "developer-tools",
-        buttonTitle: "Launch Template",
-        splashImageUrl: `${appUrl}/images/splash.png`, // URL of image to show on loading screen.	
-        splashBackgroundColor: "#ffffff", // Hex color code to use on loading screen.
-    }
-};
-
-...
-```
-
-You can learn more about publishing the Mini App and other manifest properties [here](https://miniapps.farcaster.xyz/docs/guides/publishing).
-
-## Conclusion
-
-In this guide, you explored Farcaster Mini Apps — the simplest way to create engaging, high-retention, and easily monetizable applications!
-
-You also discovered the key capabilities of Mini Apps and how you can use the [Monad Farcaster MiniApp Template](https://github.com/monad-developers/monad-miniapp-template) to build your own.
-
-For more details, check out the official Mini App documentation [here](https://miniapps.farcaster.xyz/).
+¿Dudas o sugerencias?  
+Abre un issue o contacta al equipo
